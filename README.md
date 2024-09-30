@@ -11,17 +11,19 @@ recycle and reuse was called for.
 
 This is a python3 script, if that does not match your requirements, please look elsewhere.
 
-This is my first python code, so I have not created an account with PyPI or whatever, so you need to install from this dist
-```
-pip install dist/mqtt2jsonl-0.1.0.tar.gz
-```
+This is my first python code, so I have not created an account with PyPI or whatever, so you need to build and install from this dist
 
-If you want to make changes and rebuild, remember to update the version number in the `setup.py` file, then you can build it with 
-
+build it
 ```
 python3 setup.py sdist
 ```
 
+install it
+```
+pip install dist/mqtt2jsonl-0.1.0.tar.gz
+```
+
+If you want to make changes and rebuild, remember to update the version number in the `setup.py` file.
 
 ## Using it
 
