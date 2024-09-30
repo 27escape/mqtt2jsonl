@@ -1,0 +1,249 @@
+#!/usr/bin/env python3
+
+"""mqtt2jsonl
+
+Allows the recording and replay of MQTT messages sent to a particular topic.
+The messages are recorded to a JSONL (https://jsonlines.org/) file and the
+delay between messages is also recorded so that they can be replayed at the
+same rate they were captured, though this can be over-riden if required.
+
+"""
+
+import argparse
+import logging
+import signal
+import sys
+import os
+import jsonlines
+import time
+
+from libs.status import Status
+from libs.messaging import Messaging
+
+logger = logging.getLogger(__name__)
+
+MQTT_SERVER="localhost"
+MQTT_PORT=1883
+
+# handy globals
+mqtt = None
+jsonl_file = None
+time_since = 0
+
+# ----------------------------------------------------------------------------
+
+
+def signal_handler(sig, frame):
+    """basic signal handler for tidy exit without lots of messages"""
+
+    logger.info("You pressed Ctrl+C!")
+
+    sys.exit(0)
+
+
+# ----------------------------------------------------------------------------
+def setLogLevel(loglevel):
+    logging.basicConfig(
+        format="%(asctime)s %(module)s(%(funcName)s:%(lineno)d) %(levelname)s : %(message)s",
+        level=loglevel,
+    )
+
+
+# ----------------------------------------------------------------------------
+def time_msecs():
+    return round(time.time() * 1000)
+
+
+# ----------------------------------------------------------------------------
+def record_cb(topic, data):
+    global time_since
+    now = time_msecs() - time_since
+    # update the time
+    time_since = time_msecs()
+
+    # append JSON
+    with jsonlines.open(jsonl_file, mode="a") as writer:
+        # write just one line
+        writer.write({"time_delay": now, "topic": topic, "data": data})
+        writer.close()
+
+
+# ----------------------------------------------------------------------------
+def record(host, port, file, topic, overwrite=False):
+    """record
+    record a MQTT session
+
+    Args:
+      host      (str): MQTT hostname or IP address
+      port      (int): MQTT server port number
+      file      (str): JSONL file to read messages from
+      topic     (str): MQTT topic to listen to, wildcards allowed
+      overwrite (int): Force overwrite of any existing JSONL file
+
+    Returns: nothing
+    """
+
+    global jsonl_file
+    global time_since
+    logger.info(f"Starting to record {host}:{port} for {topic} into {file}")
+
+    if not len(file):
+      print( f"Error: no JSONL file provided")
+      sys.exit( 1)
+
+    if os.path.isfile(file):
+      if overwrite:
+        os.remove(file)
+      else:
+        print(
+            f"To overwrite the existing '{file}', you need to provide the force option"
+        )
+        sys.exit(1)
+
+    jsonl_file = file
+    mqtt = Messaging(server=host, port=port)
+    # set the time we started, so we can offset from that
+    time_since = time_msecs()
+
+    print( "Ready to record, press CTRL+C when you want to stop")
+    mqtt.connect(args.topic, record_cb)
+
+
+# ----------------------------------------------------------------------------
+def replay(host, port, file, delay):
+    """
+    replay a previously saved MQTT session
+
+    Args:
+      host  (str): MQTT hostname or IP address
+      port  (int): MQTT server port number
+      file  (str): JSONL file to read messages from
+      delay (int): override delays given against each message, if > 0
+
+    Returns: nothing
+    """
+
+    if not len(file) or not os.path.isfile(file):
+      print( f"Error: no JSONL file provided")
+      sys.exit( 1)
+
+    mqtt = Messaging(server=host, port=port)
+
+    if delay:
+      print( f"Replaying with {delay}ms delay")
+    else:
+      print( "Replaying with recorded delay")
+    with jsonlines.open(file) as reader:
+        for obj in reader:
+          logger.info( f"{obj['topic']}")
+          mqtt.publish( obj['topic'], obj['data'])
+          delay_time = obj['time_delay'] if delay == 0 else delay
+          time.sleep( delay_time/1000)
+
+
+# ----------------------------------------------------------------------------
+
+if __name__ == "__main__":
+
+    # handle expected signals
+    signal.signal(signal.SIGINT, signal_handler)
+    signal.signal(signal.SIGHUP, signal_handler)
+
+    # set default log level to WARNING but if environment variable is available use that
+    LOGLEVEL = os.environ.get("LOGLEVEL", "WARNING").upper()
+    logger.info("Started")
+
+    parser = argparse.ArgumentParser(
+        description=f"Either record or replay MQTT via a JSONL file"
+    )
+    parser.add_argument(
+        "cmd",
+        type=str,
+        help="Command to perform against the MQTT topic queue, 'record' or 'replay'",
+    )
+
+    parser.add_argument(
+        "-v",
+        "--verbose",
+        # the following makes it a boolean flag
+        action="store_true",
+        help="Increase level of logging from WARNING to INFO",
+    )
+    parser.add_argument(
+        "-f",
+        "--force",
+        # the following makes it a boolean flag
+        action="store_true",
+        help="Force overwrite when destination file already exists",
+    )
+    parser.add_argument(
+        "-j",
+        "--jsonl",
+        # type="str",
+        help="JSONL file to read from or write to",
+    )
+    parser.add_argument(
+        "-s",
+        "--server",
+        # type="str",
+        help=f"MQTT server name/ip to connect to ({MQTT_SERVER})",
+        default=MQTT_SERVER,
+    )
+    parser.add_argument(
+        "-p", "--port",
+        # type="int",
+        help=f"MQTT port to connect to ({MQTT_PORT})",
+        default=MQTT_PORT
+    )
+    parser.add_argument(
+        "-t",
+        "--topic",
+        # type="str",
+        help="MQTT topic queue to listen to (for recording), usual wildcards apply (default evcerything as '#')",
+        default="#",
+    )
+    parser.add_argument(
+        "-d",
+        "--delay",
+        # type="int",
+        default=0,
+        help="For replay, override the recorded delay between messages to use an artifical value in msecs, 0 means use record value",
+    )
+
+    args = parser.parse_args()
+    logLevel = "INFO" if (args.verbose) else LOGLEVEL
+    setLogLevel(logLevel)
+
+    if args.delay and int(args.delay) < 0:
+        print(f"Error:delay cannot be less than zero")
+        sys.exit(1)
+
+    if not args.jsonl or not len(args.jsonl):
+      print( "Error: jsonl parameter must be provided")
+      sys.exit( 1)
+
+    args.cmd = args.cmd.lower()
+
+    try:
+      if args.cmd == "record":
+          record(args.server, int(args.port), args.jsonl, args.topic, args.force)
+      elif args.cmd == "replay":
+          replay(args.server, args.port, args.jsonl, int(args.delay))
+      else:
+          print(f"Error: Unknown command {args.cmd}, use record or replay")
+          sys.exit(2)
+    except ConnectionRefusedError:
+      print( f"Error: Could not connect to {args.server}:{args.port}, is the port correct?")
+    except Exception as e:
+      if type(e).__name__ == "gaierror":
+        print( f"Error: Could connect to {args.server}:{args.port}, are the server credentials correct?")
+      elif type(e).__name__ == "ValueError":
+          # .:
+          if str(e) == "Invalid subscription filter.":
+            print( f"Error: topic ({args.topic}) wildcard is incorrect")
+          else:
+            print( f"Error: {type(e).__name__}")
+      else:
+          print( f"Error: {type(e).__name__}")
+
+      sys.exit( 2)
