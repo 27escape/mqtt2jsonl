@@ -4,10 +4,9 @@ This is a simple script to listen to MQTT messages and store them into a [JSONL]
 
 I had a quick look on the Internet and could not see anything similar, though it likely exists, this just helps me at the moment.
 
-I probably did not need to have a library for the messaging side of things but I had it hanging around from elsewhere, so a bit of
-recycle and reuse was called for.
-
 ## Installation
+
+**TODO: Fix this when I understand how to package things properly**
 
 This is a python3 script, if that does not match your requirements, please look elsewhere.
 
