@@ -1,0 +1,45 @@
+[project]
+name = "mqtt2json"
+version = "0.2.1"
+description = "Record and replay of MQTT messages to/from a JSONL file"
+# license = "Apache-2.0"
+readme = "README.md"
+authors = [
+ {name="Kevin Mulholland", email="python@27escape.com"}
+]
+keywords = ["mqtt", "json", "jsonline"]
+
+# requires-python = ">=3.7"
+classifiers = [
+   "Environment :: Console",
+   "Intended Audience :: Developers",
+   "Operating System :: OS Independent",
+   "Programming Language :: Python :: 3",
+   "Topic :: File Formats :: JSON",
+]
+
+dependencies = [
+  "paho-mqtt>2.0.0",
+  "jsonline"
+]
+
+[project.urls]
+Homepage = "https://github.com/27escape/mqtt2jsonl"
+# Documentation = "https://github.com/27escape/mqtt2jsonl/README.md"
+Repository = "https://github.com/27escape/mqtt2jsonl"
+Issues = "https://github.com/27escape/mqtt2jsonl/issues"
+# Changelog = "https://github.com/me/spam/blob/master/CHANGELOG.md"
+
+
+# find local modules
+[tool.setuptools.packages]
+find = {}
+
+
+# we want the following to be available via the CLI
+# though this may only be in the virtualenv that you have built/installed it into
+# in the filepath replace '/' with '.' and remove and .py from script name
+# :main is the function to call in the script, could be anything
+[project.scripts]
+mqtt2jsonl = "src.mqtt2jsonl:main"
+
