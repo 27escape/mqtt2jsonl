@@ -1,11 +1,11 @@
 [project]
 name = "mqtt2json"
-version = "0.2.1"
+version = "0.3.1"
 description = "Record and replay of MQTT messages to/from a JSONL file"
 # license = "Apache-2.0"
 readme = "README.md"
 authors = [
- {name="Kevin Mulholland", email="python@27escape.com"}
+  {name="Kevin Mulholland", email="python@27escape.com"}
 ]
 keywords = ["mqtt", "json", "jsonline"]
 
