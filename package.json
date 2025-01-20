@@ -1,0 +1,6 @@
+{
+  "version": "0.0.0",
+  "private": true,
+  "name": "mqtt2jsonl",
+  "description": "This file is only for maintaining a version number"
+}
