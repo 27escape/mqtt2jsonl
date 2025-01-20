@@ -1,3 +1,16 @@
+## <small>0.3.1 (2025-01-20)</small>
+
+* 0.3.1 ([7909963](https://github.com/27escape/mqtt2jsonl/commit/7909963))
+* update version number to match package.json after next tag_release ([e04a39e](https://github.com/27escape/mqtt2jsonl/commit/e04a39e))
+
+
+
+## 0.3.0 (2025-01-20)
+
+* release: updating changelogs for 0.3.0 ([ec85a32](https://github.com/27escape/mqtt2jsonl/commit/ec85a32))
+
+
+
 ## 0.3.0 (2025-01-20)
 
 * 0.3.0 ([ae63fa6](https://github.com/27escape/mqtt2jsonl/commit/ae63fa6))
