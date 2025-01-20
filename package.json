@@ -2,5 +2,13 @@
   "version": "0.0.0",
   "private": true,
   "name": "mqtt2jsonl",
-  "description": "This file is only for maintaining a version number"
+  "description": "This file is only for maintaining a version number",
+  "devDependencies": {
+    "cz-conventional-changelog": "^3.3.0"
+  },
+  "config": {
+    "commitizen": {
+      "path": "./node_modules/cz-conventional-changelog"
+    }
+  }
 }
