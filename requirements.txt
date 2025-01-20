@@ -1,0 +1,7 @@
+attrs==24.2.0
+build==1.2.2
+jsonline==0.2.1
+jsonlines==4.0.0
+packaging==24.1
+paho-mqtt==2.1.0
+pyproject_hooks==1.2.0

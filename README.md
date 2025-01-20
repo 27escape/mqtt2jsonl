@@ -10,19 +10,16 @@ I had a quick look on the Internet and could not see anything similar, though it
 
 This is a python3 script, if that does not match your requirements, please look elsewhere.
 
-This is my first python code, so I have not created an account with PyPI or whatever, so you need to build and install from this dist
-
-build it
-```
-python3 setup.py sdist
-```
+This is my first python code, so I have not created an account with PyPI or whatever, so you need to install from this dist
 
 install it
 ```
-pip install dist/mqtt2jsonl-0.1.0.tar.gz
+pip install -r requirements.txt
+pip install -e .
 ```
+This will make the script `mqtt2jsonl` available either in the virtualenv you are running in or your complete environment
 
-If you want to make changes and rebuild, remember to update the version number in the `setup.py` file.
+If you want to make changes and rebuild, remember to update the version number in the `pyproject.toml` file.
 
 ## Using it
 
@@ -58,7 +55,7 @@ options:
 
 Connect to default localhost port 1883, with a wildcard topic, overwriting any previous file
 ```
-./mqtt2jsonl -j /tmp/record.jsonl record -t '/photos/#' -f
+./mqtt2jsonl -j /tmp/record.jsonl record -t 'some_topic/#' -f
 ```
 
 Connect to to named server and port, use default topic of everything (#) 
