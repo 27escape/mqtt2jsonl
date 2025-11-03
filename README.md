@@ -63,6 +63,7 @@ Connect to to named server and port, use default topic of everything (#)
 ./mqtt2jsonl -j /tmp/record.jsonl record --server some_mqtt_server --port 1000 
 ```
 
+I have provided `sample.json` as an example of a recording, this is the recorded output of my gnarlypi project when copying files from my camera.
 
 ### Replay
 
@@ -75,6 +76,7 @@ Connect to to named server and port, replay at a fast rate of one message per 5m
 ```
 ./mqtt2jsonl -j /tmp/record.jsonl record --server some_mqtt_server --port 1000  --delay=5
 ```
+
 
 
 ## Improvements / TODO
