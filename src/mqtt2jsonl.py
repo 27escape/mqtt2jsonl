@@ -21,8 +21,8 @@ import paho.mqtt.client as paho
 
 logger = logging.getLogger(__name__)
 
-MQTT_SERVER="localhost"
-MQTT_PORT=1883
+MQTT_SERVER = "localhost"
+MQTT_PORT = 1883
 
 # handy globals
 mqtt = None
@@ -36,6 +36,7 @@ RECONNECT_RATE = 2
 MAX_RECONNECT_COUNT = 12
 MAX_RECONNECT_DELAY = 60
 
+
 class Messaging:
 
     def __init__(self, server=None, port=None) -> None:
@@ -43,18 +44,15 @@ class Messaging:
         self.client = None
         self.topic = None
         self.topic_handler = None
-        self.server =  server
-        self.port =  port
-
+        self.server = server
+        self.port = port
 
     # ----------------------------------------------------------------------------
     def on_disconnect(self, client, userdata, rc):
-        """
-        """
+        """ """
         print("on disconnect")
         if rc != 0:
             print("Unexpected MQTT disconnection. Will auto-reconnect")
-
 
     def on_disconnect_retry(self, client, userdata, rc):
         logger.info("Disconnected with result code: %s", rc)
@@ -77,38 +75,33 @@ class Messaging:
 
     # ----------------------------------------------------------------------------
 
-
     def on_connect(self, client, userdata, flags, reason_code, properties):
-        """
-        """
+        """ """
         if reason_code == 0:
             logger.info(f"Connected to MQTT server: {self.server}:{self.port}")
             self.client.subscribe(self.topic, qos=1)
         else:
             logger.debug("Failed to connect, return code: {}".format(reason_code))
 
-
     # ----------------------------------------------------------------------------
     def on_message(self, client, userdata, message):
-        """
-        """
+        """ """
         # Identify topic and call appropriate handler function
         # we will ignore the user data and pull out the payload
         # for this usecase not much else is needed
 
-        logger.debug( f"topic: {message.topic} data:{message.payload.decode()}")
+        logger.debug(f"topic: {message.topic} data:{message.payload.decode()}")
         if self.topic_handler:
-            self.topic_handler(topic=message.topic, data=json.loads(message.payload.decode()))
-
+            self.topic_handler(
+                topic=message.topic, data=json.loads(message.payload.decode())
+            )
 
     # ----------------------------------------------------------------------------
     # pass topic handlers if we are in a subscription kinda mood,
     # will then loop forever waiting for topics to be pubished
 
-
     def connect(self, topic=None, topic_handler=None):
-        """
-        """
+        """ """
 
         if topic != None:
             self.topic = topic
@@ -119,7 +112,9 @@ class Messaging:
 
         # keep alive is 300s
         if self.client.connect(self.server, self.port, 300) != 0:
-            logger.error(f"Couldn't connect to the MQTT server: {self.server}:{self.port}")
+            logger.error(
+                f"Couldn't connect to the MQTT server: {self.server}:{self.port}"
+            )
             self.connected = False
         else:
             self.connected = True
@@ -134,31 +129,26 @@ class Messaging:
             self.client.on_message = self.on_message
             self.client.loop_forever()
 
-
     # ----------------------------------------------------------------------------
     def publish(self, subtopic, data={}):
-        """
-        """
+        """ """
 
         # attempt a reconnect if needed
         if not self.connected:
             self.connect()
 
         if self.connected:
-            self.client.publish(f"{subtopic}",  json.dumps(data))
-
+            self.client.publish(f"{subtopic}", json.dumps(data))
 
     # ----------------------------------------------------------------------------
     def client_disconnect(self):
-        """
-        """
+        """ """
         if self.connected:
             self.client.disconnect()
 
 
-
-
 # ----------------------------------------------------------------------------
+
 
 def signal_handler(sig, frame):
     """basic signal handler for tidy exit without lots of messages"""
@@ -215,25 +205,25 @@ def record(host, port, file, topic, overwrite=False):
     logger.info(f"Starting to record {host}:{port} for {topic} into {file}")
 
     if not len(file):
-      print( f"Error: no JSONL file provided")
-      sys.exit( 1)
+        print(f"Error: no JSONL file provided")
+        sys.exit(1)
 
     if os.path.isfile(file):
-      if overwrite:
-        os.remove(file)
-      else:
-        print(
-            f"To overwrite the existing '{file}', you need to provide the force option"
-        )
-        sys.exit(1)
+        if overwrite:
+            os.remove(file)
+        else:
+            print(
+                f"To overwrite the existing '{file}', you need to provide the force option"
+            )
+            sys.exit(1)
 
     jsonl_file = file
     mqtt = Messaging(server=host, port=port)
     # set the time we started, so we can offset from that
     time_since = time_msecs()
 
-    print( "Ready to record, press CTRL+C when you want to stop")
-    mqtt.connect(args.topic, record_cb)
+    print("Ready to record, press CTRL+C when you want to stop")
+    mqtt.connect(topic, record_cb)
 
 
 # ----------------------------------------------------------------------------
@@ -251,21 +241,21 @@ def replay(host, port, file, delay):
     """
 
     if not len(file) or not os.path.isfile(file):
-      print( f"Error: no JSONL file provided")
-      sys.exit( 1)
+        print(f"Error: no JSONL file provided")
+        sys.exit(1)
 
     mqtt = Messaging(server=host, port=port)
 
     if delay:
-      print( f"Replaying with {delay}ms delay")
+        print(f"Replaying with {delay}ms delay")
     else:
-      print( "Replaying with recorded delay")
+        print("Replaying with recorded delay")
     with jsonlines.open(file) as reader:
         for obj in reader:
-          logger.info( f"{obj['topic']}")
-          mqtt.publish( obj['topic'], obj['data'])
-          delay_time = obj['time_delay'] if delay == 0 else delay
-          time.sleep( delay_time/1000)
+            logger.info(f"{obj['topic']}")
+            mqtt.publish(obj["topic"], obj["data"])
+            delay_time = obj["time_delay"] if delay == 0 else delay
+            time.sleep(delay_time / 1000)
 
 
 def main():
@@ -298,6 +288,7 @@ def main():
         "--force",
         # the following makes it a boolean flag
         action="store_true",
+        default=False,
         help="Force overwrite when destination file already exists",
     )
     parser.add_argument(
@@ -314,10 +305,11 @@ def main():
         default=MQTT_SERVER,
     )
     parser.add_argument(
-        "-p", "--port",
+        "-p",
+        "--port",
         # type="int",
         help=f"MQTT port to connect to ({MQTT_PORT})",
-        default=MQTT_PORT
+        default=MQTT_PORT,
     )
     parser.add_argument(
         "-t",
@@ -343,35 +335,44 @@ def main():
         sys.exit(1)
 
     if not args.jsonl or not len(args.jsonl):
-      print( "Error: jsonl parameter must be provided")
-      sys.exit( 1)
+        print("Error: jsonl parameter must be provided")
+        sys.exit(1)
 
     args.cmd = args.cmd.lower()
 
     try:
-      if args.cmd == "record":
-          record(args.server, int(args.port), args.jsonl, args.topic, args.force)
-      elif args.cmd == "replay":
-          replay(args.server, args.port, args.jsonl, int(args.delay))
-      else:
-          print(f"Error: Unknown command {args.cmd}, use record or replay")
-          sys.exit(2)
+        # print(f"Command: {args.cmd}")
+        if args.cmd == "record":
+            record(args.server, int(args.port), args.jsonl, args.topic, args.force)
+        elif args.cmd == "replay":
+            replay(args.server, args.port, args.jsonl, int(args.delay))
+        else:
+            print(f"Error: Unknown command {args.cmd}, use record or replay")
+            sys.exit(2)
     except ConnectionRefusedError:
-      print( f"Error: Could not connect to {args.server}:{args.port}, is the port correct?")
+        print(
+            f"Error: Could not connect to {args.server}:{args.port}, is the port correct?"
+        )
     except Exception as e:
-      if type(e).__name__ == "gaierror":
-        print( f"Error: Could connect to {args.server}:{args.port}, are the server credentials correct?")
-      elif type(e).__name__ == "ValueError":
-          # .:
-          if str(e) == "Invalid subscription filter.":
-            print( f"Error: topic ({args.topic}) wildcard is incorrect")
-          else:
-            print( f"Error: {type(e).__name__}")
-      else:
-          print( f"Error: {type(e).__name__}")
+        # deconstruct the exception type, file and line number
+        exc_type, exc_obj, exc_tb = sys.exc_info()
+        fname = os.path.split(exc_tb.tb_frame.f_code.co_filename)[1]
+        print(f"{exc_type} File:{fname} Line:{exc_tb.tb_lineno}")
+        
+        if type(e).__name__ == "gaierror":
+            print(
+                f"Error: Could connect to {args.server}:{args.port}, are the server credentials correct?"
+            )
+        elif type(e).__name__ == "ValueError":
+            # .:
+            if str(e) == "Invalid subscription filter.":
+                print(f"Error: topic ({args.topic}) wildcard is incorrect")
+            else:
+                print(f"Error: {type(e).__name__}")
+        else:
+            print(f"Error: {type(e).__name__}")
 
-      sys.exit( 2)
-
+        sys.exit(2)
 
 
 # ----------------------------------------------------------------------------
